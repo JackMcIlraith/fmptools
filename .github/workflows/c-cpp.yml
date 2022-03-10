@@ -1,0 +1,38 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ clang, gcc ]
+    steps:
+      - name: Install packages
+        run: brew install automake yajl libxlsxwriter
+      - uses: actions/checkout@v2
+      - name: Autoconf
+        run: autoreconf -i -f
+      - name: Configure
+        run: ./configure
+        env:
+          CC: ${{ matrix.compiler }}
+      - name: Make
+        run: make
+      - name: JSON test
+        run: ./fmp2json test/data/fp3/government.FP3 -
+      - name: SQLite test
+        run: ./fmp2sqlite test/data/fp3/government.FP3 government.sqlite
+      - name: Excel test
+        run: ./fmp2excel test/data/fp3/government.FP3 government.xlsx
+      - name: make check
+        run: make check
+      - name: make distcheck
+        run: make distcheck
